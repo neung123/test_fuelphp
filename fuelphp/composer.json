@@ -1,0 +1,57 @@
+{
+    "name": "fuel/fuel",
+    "type": "metapackage",
+    "description": "The FuelPHP framework",
+    "keywords": ["framework"],
+    "homepage": "http://fuelphp.com",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "FuelPHP Development Team",
+            "email": "team@fuelphp.com"
+        }
+    ],
+    "support": {
+        "irc": "irc://irc.freenode.org/fuelphp",
+        "forum": "http://fuelphp.com/forums"
+    },
+    "require": {
+        "monolog/monolog"             : "2.0.*",
+        "fuelphp/upload"              : "2.0.*",
+        "mikey179/vfsstream"          : "2.0.x-dev",
+        "aws/aws-sdk-php"             : "3.133.*",
+        "fluent/logger"               : "1.0.*",
+        "symfony/yaml"                : "^4.0"
+    },
+    "require-dev": {
+        "mockery/mockery"             : "^1.0",
+        "phing/phing"                 : "2.16.*",
+        "phpunit/phpunit"             : "7.5.*",
+        "phpunit/dbunit"              : "4.0.*",
+        "phpmd/phpmd"                 : "2.8.*",
+        "pdepend/pdepend"             : "2.7.*",
+        "squizlabs/php_codesniffer"   : "3.5.*",
+        "sebastian/phpcpd"            : "5.0.*",
+        "lox/xhprof"                  : "dev-master",
+        "robmorgan/phinx"             : "0.9.*"
+    },
+    "suggest": {
+        "mustache/mustache" : "Allow Mustache templating with the Parser package",
+        "smarty/smarty"     : "Allow Smarty templating with the Parser package",
+        "twig/twig"         : "Allow Twig templating with the Parser package",
+        "mthaml/mthaml"     : "Allow Haml templating with Twig supports with the Parser package"
+    },
+    "config": {
+        "vendor-dir": "fuel/vendor",
+        "discard-changes": true
+    },
+    "bin": [
+        "phpcov"
+    ],
+    "scripts": {
+        "post-install-cmd": [
+            "php oil r install"
+        ]
+    },
+    "minimum-stability": "dev"
+}

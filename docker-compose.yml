@@ -1,0 +1,52 @@
+version: "3"
+services:
+    web:
+        container_name: ikemen_nginx
+        build:
+            context: .
+            dockerfile: Dockerfile_nginx
+        image: ikemennginximage
+        restart: unless-stopped
+        volumes:
+            - ./:/var/www
+            - ./config/nginx/:/etc/nginx/conf.d/
+        ports:
+            - "6080:80"
+        links:
+            - app
+        depends_on:
+            - app
+    app:
+        container_name: ikemen_app
+        build:
+            context: .
+            dockerfile: Dockerfile
+        image: ikemenfuelappimage
+        restart: unless-stopped
+        volumes:
+            - ./:/var/www
+        links:
+            - db
+            - redis
+    db:
+        container_name: ikemen_mysql
+        image: mysql:5.7.22
+        environment:
+            MYSQL_DATABASE: root
+            MYSQL_ROOT_PASSWORD: YOUR_PASSWORD
+        volumes:
+            - dbdata:/var/lib/mysql
+        ports:
+            - "3307:3306"
+    redis:
+        container_name: ikemen_redis
+        restart: always
+        image: redis:latest
+        volumes:
+            - ./redis:/data
+        ports:
+            - "16379:6379"
+        command: redis-server --appendonly yes            
+volumes:
+    dbdata:
+        driver: local

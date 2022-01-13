@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="KB API Project" basedir="." default="all">
+
+    <!-- 環境変数を取得するためのおまじない -->
+    <property environment="env"/>
+    <property name="build_dir" value="build" />
+    <!-- テストの実行の際には必ず、initが含まれるようにしている。これをしないとfixtureのloadが行われないため -->
+    <property name="phpunit_group"  value="init,${env.GROUP}" />
+
+
+
+
+    <!-- 初期化処理：ビルドの出力先ディレクトリの削除 -->
+    <target name="init">
+        <delete dir="${build_dir}" includeemptydirs="true" />
+        <mkdir dir="${build_dir}" />
+    </target>
+    <!--/ 初期化処理：ビルドの出力先ディレクトリの削除 -->
+
+
+
+    <!-- DBのmigration周り -->
+    <target name="migrate.up">
+        <exec dir="." command="
+            env
+                FUEL_ENV=test
+                IS_UNITTEST=true
+                PLATFORM=gl
+                HTTP_X_CY_DEVICE=Android
+                JENKINS_DB=${env.JENKINS_DB}
+            php oil refine unittest_db create
+            "/>
+        <exec dir="." command="
+            env
+                PHINX_JENKINS_DB=${env.JENKINS_DB}
+            ./fuel/vendor/bin/phinx migrate -e unittest.TOOL_NAME
+            "/>
+    </target>
+    <target name="migrate.down">
+        <exec dir="." command="
+            env
+                FUEL_ENV=test
+                IS_UNITTEST=true
+                PLATFORM=gl
+                HTTP_X_CY_DEVICE=Android
+                JENKINS_DB=${env.JENKINS_DB}
+            php oil refine unittest_db drop
+            "/>
+    </target>
+    <!-- / DBのmigration周り -->
+
+
+
+    <!-- 依存パッケージのinstall -->
+    <target name="composer">
+        <exec dir="." command="
+            php ./composer.phar install
+            "/>
+    </target>
+    <!-- / 依存パッケージのinstall -->
+
+
+
+    <!-- ユニットテストの実行 -->
+    <!-- ユニットテストはEnv:test, PLATFORM: glで回すものとする。 -->
+    <!-- ユニットテストが通ったか否かはすべてbuild/logs/junit.xmlを参照することでわかるものとする -->
+    <target name="test">
+        <exec dir="." command="
+            env
+                FUEL_ENV=test
+                PLATFORM=gl
+                HTTP_X_CY_DEVICE=Android
+                IS_UNITTEST=true
+                JENKINS_DB=${env.JENKINS_DB}
+            php fuel/vendor/bin/phpunit
+                -c fuel/app/phpunit.xml
+                --group=init,${phpunit_group}
+                --log-junit=build/logs/junit.xml
+            "/>
+    </target>
+    <!-- / ユニットテストの実行 -->
+
+
+    <!-- カバレッジレポート周りの処理 -->
+    <!-- カバレッジのレポートはbuild/logs/clover.xmlに出力するものとする -->
+    <target name="coverage.xml">
+        <exec dir="." command="
+            env
+                FUEL_ENV=test
+                PLATFORM=gl
+                HTTP_X_CY_DEVICE=Android
+                IS_UNITTEST=true
+                JENKINS_DB=${env.JENKINS_DB}
+            php -dzend_extension=xdebug.so fuel/vendor/bin/phpunit
+                -c fuel/app/phpunit.xml
+                --group=init,${phpunit_group}
+                --coverage-clover=build/logs/clover.xml
+                --coverage-html=build/logs/coverage_html/
+            "/>
+    </target>
+    <!-- / カバレッジレポート周りの処理 -->
+
+
+    <!-- ドキュメントの生成 -->
+    <target name="mkdocs.build">
+        <exec dir="." failonerror="true" command="cp -f README.md ./docs/index.md"/>
+        <exec dir="." failonerror="true" command="docker run --rm -v ${basedir}/docs:/docs jobandtalent/mkdocs build"/>
+    </target>
+    <!-- / ドキュメントの生成 -->
+
+    <!-- ER図の生成 -->
+    <!-- PHPのinstallとGraphvizのinstallが必要 -->
+    <!-- 最終的にbuild/erdocs.pdfが生成される -->
+    <target name="erdocs.build">
+        <exec dir="." failonerror="true" command="mkdir -p ./build"/>
+        <exec dir="." failonerror="true" command="php bin/erdocs.php ./build/erdocs.dot"/>
+        <exec dir="." failonerror="true" command="dot -Tpdf -Kfdp build/erdocs.dot -o build/erdocs.pdf"/>
+    </target>
+    <!-- /ER図の生成 -->
+
+    <!-- Jenkinsで実行することを想定しているjob -->
+    <target name="ci.test"       depends="init, composer, migrate.up, test,         migrate.down" />
+    <target name="ci.coverage"   depends="init, composer, migrate.up, coverage.xml, migrate.down" />
+    <!-- / Jenkinsで実行することを想定しているjob -->
+</project>
