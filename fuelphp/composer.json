@@ -50,6 +50,7 @@
     ],
     "scripts": {
         "post-install-cmd": [
+            "php oil -v",
             "php oil r install"
         ]
     },
